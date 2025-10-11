@@ -1,7 +1,3 @@
-from input_part import get_user_input
-from calc_part import calculate
-from format_part import format_result
-
 def get_user_input():
     try:
         num1 = float(input("Введите первое число: "))
@@ -11,6 +7,7 @@ def get_user_input():
     except ValueError:
         print("Ошибка: нужно вводить числа!")
         return None, None, None
+
 
 def calculate(num1, operation, num2):
     if operation == "+":
@@ -27,6 +24,10 @@ def calculate(num1, operation, num2):
         return "Неизвестная операция"
 
 
+def format_result(num1, operation, num2, result):
+    return f"{num1} {operation} {num2} = {result}"
+
+
 def main():
     num1, operation, num2 = get_user_input()
     if num1 is None:
@@ -34,7 +35,6 @@ def main():
     result = calculate(num1, operation, num2)
     print(format_result(num1, operation, num2, result))
 
+
 if __name__ == "__main__":
     main()
-
-
