@@ -12,15 +12,6 @@ def get_user_input():
         print("Ошибка: нужно вводить числа!")
         return None, None, None
 
-def main():
-    num1, operation, num2 = get_user_input()
-    if num1 is None:
-        return
-    result = calculate(num1, operation, num2)
-    print(format_result(num1, operation, num2, result))
-
-if __name__ == "__main__":
-    main()
 def calculate(num1, operation, num2):
     if operation == "+":
         return num1 + num2
@@ -34,3 +25,16 @@ def calculate(num1, operation, num2):
         return num1 / num2
     else:
         return "Неизвестная операция"
+
+
+def main():
+    num1, operation, num2 = get_user_input()
+    if num1 is None:
+        return
+    result = calculate(num1, operation, num2)
+    print(format_result(num1, operation, num2, result))
+
+if __name__ == "__main__":
+    main()
+
+
