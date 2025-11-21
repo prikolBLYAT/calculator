@@ -2,9 +2,11 @@ name: Build Calculator
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -22,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller pytest
+          pip install pyinstaller pytest stdeb
 
       - name: Run tests
         run: pytest
@@ -30,8 +32,25 @@ jobs:
       - name: Build exe with PyInstaller
         run: pyinstaller --onefile main.py --name calculator.exe
 
-      - name: Upload exe as artifact
-        uses: actions/upload-artifact@v4
+      - name: Build deb package
+        run: |
+          python setup.py --command-packages=stdeb.command bdist_deb
+          ls -l deb_dist/
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          name: calculator-exe
-          path: dist/calculator.exe
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload assets to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/calculator.exe
+            deb_dist/*/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
