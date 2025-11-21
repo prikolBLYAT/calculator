@@ -2,9 +2,9 @@ name: Build Calculator
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   release:
     types: [created]
 
@@ -34,6 +34,7 @@ jobs:
 
       - name: Build deb package from source
         run: |
+          VERSION=${GITHUB_REF_NAME#v}
           mkdir -p deb_package/DEBIAN
           mkdir -p deb_package/usr/lib/calculator
           mkdir -p deb_package/usr/bin
@@ -42,22 +43,18 @@ jobs:
           cp *.py deb_package/usr/lib/calculator/
 
           # Создаем исполняемый скрипт для запуска
-          cat > deb_package/usr/bin/calculator <<EOL
-#!/bin/bash
-python3 /usr/lib/calculator/main.py "\$@"
-EOL
+          echo '#!/bin/bash' > deb_package/usr/bin/calculator
+          echo 'python3 /usr/lib/calculator/main.py "$@"' >> deb_package/usr/bin/calculator
           chmod +x deb_package/usr/bin/calculator
 
           # Создаем control файл
-          cat > deb_package/DEBIAN/control <<EOL
-Package: calculator
-Version: 1.0.0
-Section: utils
-Priority: optional
-Architecture: all
-Maintainer: Your Name <you@example.com>
-Description: Simple Python calculator
-EOL
+          echo 'Package: calculator' > deb_package/DEBIAN/control
+          echo 'Version: $VERSION' >> deb_package/DEBIAN/control
+          echo 'Section: utils' >> deb_package/DEBIAN/control
+          echo 'Priority: optional' >> deb_package/DEBIAN/control
+          echo 'Architecture: all' >> deb_package/DEBIAN/control
+          echo 'Maintainer: Svetloe Pivo <svetloe@koronovonoe-pivo.ru>' >> deb_package/DEBIAN/control
+          echo 'Description: Simple Python calculator' >> deb_package/DEBIAN/control
 
           # Сборка deb
           dpkg-deb --build deb_package
@@ -83,4 +80,3 @@ EOL
       - name: Clean build files
         run: |
           rm -rf build dist __pycache__ *.spec deb_package
-
