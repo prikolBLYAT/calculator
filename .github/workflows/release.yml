@@ -1,10 +1,8 @@
 name: Release Calculator
 
 on:
-  push:
-    branches: [main, fix]
-  pull_request:
-    branches: [main]
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -32,7 +30,7 @@ jobs:
 
       - name: Build deb package from source
         run: |
-          # VERSION=${GITHUB_REF_NAME#v}
+          VERSION=${GITHUB_REF_NAME#v}
           mkdir -p deb_package/DEBIAN
           mkdir -p deb_package/usr/lib/calculator
           mkdir -p deb_package/usr/bin
@@ -47,7 +45,7 @@ jobs:
 
           # Создаем control файл
           echo 'Package: calculator' > deb_package/DEBIAN/control
-          echo 'Version: 0.0.1' >> deb_package/DEBIAN/control
+          echo 'Version: $VERSION' >> deb_package/DEBIAN/control
           echo 'Section: utils' >> deb_package/DEBIAN/control
           echo 'Priority: optional' >> deb_package/DEBIAN/control
           echo 'Architecture: all' >> deb_package/DEBIAN/control
@@ -56,6 +54,24 @@ jobs:
 
           # Сборка deb
           dpkg-deb --build deb_package
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/calculator.exe
+            deb_package.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean build files
         run: |
