@@ -28,7 +28,7 @@ jobs:
       - name: Build exe with PyInstaller
         run: pyinstaller --onefile main.py --name calculator.exe
 
-      - name: Build deb package from source
+      - name: Build deb cli package from source
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo $VERSION
@@ -52,6 +52,34 @@ jobs:
           echo 'Architecture: all' >> deb_package/DEBIAN/control
           echo 'Maintainer: Svetloe Pivo <svetloe@koronovonoe-pivo.ru>' >> deb_package/DEBIAN/control
           echo 'Description: Simple Python calculator' >> deb_package/DEBIAN/control
+
+          # Сборка deb
+          dpkg-deb --build deb_package
+
+      - name: Build deb GUI package from source
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo $VERSION
+          mkdir -p deb_package_gui/DEBIAN
+          mkdir -p deb_package_gui/usr/lib/calculator
+          mkdir -p deb_package_gui/usr/bin
+
+          # Копируем исходники в /usr/lib/calculator
+          cp *.py deb_package_gui/usr/lib/calculator/
+
+          # Создаем исполняемый скрипт для запуска
+          echo '#!/bin/bash' > deb_package_gui/usr/bin/calculator
+          echo 'python3 /usr/lib/calculator/calc_gui.py "$@"' >> deb_package_gui/usr/bin/calculator
+          chmod +x deb_package_gui/usr/bin/calculator
+
+          # Создаем control файл
+          echo 'Package: calculator GUI' > deb_package_gui/DEBIAN/control
+          echo "Version: $VERSION" >> deb_package_gui/DEBIAN/control
+          echo 'Section: utils' >> deb_package_gui/DEBIAN/control
+          echo 'Priority: optional' >> deb_package_gui/DEBIAN/control
+          echo 'Architecture: all' >> deb_package_gui/DEBIAN/control
+          echo 'Maintainer: Svetloe Pivo <svetloe@koronovonoe-pivo.ru>' >> deb_package_gui/DEBIAN/control
+          echo 'Description: Simple Python calculator GUI' >> deb_package_gui/DEBIAN/control
 
           # Сборка deb
           dpkg-deb --build deb_package
