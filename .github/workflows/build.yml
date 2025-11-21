@@ -1,11 +1,10 @@
-name: Build Calculator
+name: Release Calculator
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
+    branches: [main, fix]
+    tags-ignore:
+      - "*"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,8 +29,33 @@ jobs:
       - name: Build exe with PyInstaller
         run: pyinstaller --onefile main.py --name calculator.exe
 
-      - name: Upload exe as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: calculator-exe
-          path: dist/calculator.exe
+      - name: Build deb package from source
+        run: |
+          # VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p deb_package/DEBIAN
+          mkdir -p deb_package/usr/lib/calculator
+          mkdir -p deb_package/usr/bin
+
+          # Копируем исходники в /usr/lib/calculator
+          cp *.py deb_package/usr/lib/calculator/
+
+          # Создаем исполняемый скрипт для запуска
+          echo '#!/bin/bash' > deb_package/usr/bin/calculator
+          echo 'python3 /usr/lib/calculator/main.py "$@"' >> deb_package/usr/bin/calculator
+          chmod +x deb_package/usr/bin/calculator
+
+          # Создаем control файл
+          echo 'Package: calculator' > deb_package/DEBIAN/control
+          echo 'Version: 0.0.1' >> deb_package/DEBIAN/control
+          echo 'Section: utils' >> deb_package/DEBIAN/control
+          echo 'Priority: optional' >> deb_package/DEBIAN/control
+          echo 'Architecture: all' >> deb_package/DEBIAN/control
+          echo 'Maintainer: Svetloe Pivo <svetloe@koronovonoe-pivo.ru>' >> deb_package/DEBIAN/control
+          echo 'Description: Simple Python calculator' >> deb_package/DEBIAN/control
+
+          # Сборка deb
+          dpkg-deb --build deb_package
+
+      - name: Clean build files
+        run: |
+          rm -rf build dist __pycache__ *.spec deb_package

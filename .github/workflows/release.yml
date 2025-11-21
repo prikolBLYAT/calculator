@@ -1,0 +1,90 @@
+name: Release Calculator
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pytest
+
+      - name: Run tests
+        run: pytest
+
+      - name: Build exe with PyInstaller
+        run: pyinstaller --onefile main.py --name calculator.exe
+
+      - name: Build deb package from source
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo $VERSION
+          mkdir -p deb_package/DEBIAN
+          mkdir -p deb_package/usr/lib/calculator
+          mkdir -p deb_package/usr/bin
+
+          # Копируем исходники в /usr/lib/calculator
+          cp *.py deb_package/usr/lib/calculator/
+
+          # Создаем исполняемый скрипт для запуска
+          echo '#!/bin/bash' > deb_package/usr/bin/calculator
+          echo 'python3 /usr/lib/calculator/main.py "$@"' >> deb_package/usr/bin/calculator
+          chmod +x deb_package/usr/bin/calculator
+
+          # Создаем control файл
+          echo 'Package: calculator' > deb_package/DEBIAN/control
+          echo "Version: $VERSION" >> deb_package/DEBIAN/control
+          echo 'Section: utils' >> deb_package/DEBIAN/control
+          echo 'Priority: optional' >> deb_package/DEBIAN/control
+          echo 'Architecture: all' >> deb_package/DEBIAN/control
+          echo 'Maintainer: Svetloe Pivo <svetloe@koronovonoe-pivo.ru>' >> deb_package/DEBIAN/control
+          echo 'Description: Simple Python calculator' >> deb_package/DEBIAN/control
+
+          # Сборка deb
+          dpkg-deb --build deb_package
+
+      #      - name: Create GitHub Release
+      #        id: create_release
+      #        uses: softprops/action-gh-release@v1
+      #        with:
+      #          tag_name: ${{ github.ref_name }}
+      #          name: Release ${{ github.ref_name }}
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload exe to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/calculator.exe
+          asset_name: calculator.exe
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Upload dpkg to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: deb_package.deb
+          asset_name: calculator.deb
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Clean build files
+        run: |
+          rm -rf build dist __pycache__ *.spec deb_package
