@@ -3,9 +3,8 @@ name: Release Calculator
 on:
   push:
     branches: [main, fix]
-  pull_request:
-    branches: [main]
-
+    tags-ignore:
+      - "*"
 jobs:
   build:
     runs-on: ubuntu-latest
