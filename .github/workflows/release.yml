@@ -56,14 +56,14 @@ jobs:
           # Сборка deb
           dpkg-deb --build deb_package
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #      - name: Create GitHub Release
+      #        id: create_release
+      #        uses: softprops/action-gh-release@v1
+      #        with:
+      #          tag_name: ${{ github.ref_name }}
+      #          name: Release ${{ github.ref_name }}
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts to Release
         uses: softprops/action-gh-release@v1
