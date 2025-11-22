@@ -28,6 +28,9 @@ jobs:
       - name: Build exe with PyInstaller
         run: pyinstaller --onefile main.py --name calculator.exe
 
+      - name: Build exe gui with PyInstaller
+        run: pyinstaller --onefile calc_gui.py --name calculator_gui.exe
+
       - name: Build deb cli package from source
         run: |
           VERSION=${GITHUB_REF_NAME#v}
@@ -99,6 +102,16 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: dist/calculator.exe
           asset_name: calculator.exe
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Upload exe to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/calculator_gui.exe
+          asset_name: calculator_gui.exe
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
